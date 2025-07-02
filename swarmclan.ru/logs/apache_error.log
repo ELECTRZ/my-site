@@ -1,0 +1,12 @@
+[Wed Jul 02 01:08:50.737634 2025] [authz_core:error] [pid 1408314:tid 1408394] [client 46.101.1.225:49442] AH01630: client denied by server configuration: /www/wwwroot/swarmclan.ru/frontend/server-status
+[Wed Jul 02 01:08:51.352021 2025] [authz_core:error] [pid 1408312:tid 1408422] [client 46.101.1.225:49488] AH01630: client denied by server configuration: /www/wwwroot/swarmclan.ru/frontend/.git
+[Wed Jul 02 03:44:34.512024 2025] [proxy:error] [pid 1096:tid 1227] (111)Connection refused: AH00957: http: attempt to connect to 127.0.0.1:3001 (localhost:3001) failed
+[Wed Jul 02 03:44:34.512594 2025] [proxy_http:error] [pid 1096:tid 1227] [client 44.243.3.129:44296] AH01114: HTTP: failed to make connection to backend: localhost, referer: http://swarmclan.ru/
+[Wed Jul 02 03:44:37.363397 2025] [proxy:error] [pid 1097:tid 1183] (111)Connection refused: AH00957: http: attempt to connect to 127.0.0.1:3001 (localhost:3001) failed
+[Wed Jul 02 03:44:37.363459 2025] [proxy_http:error] [pid 1097:tid 1183] [client 44.243.3.129:44324] AH01114: HTTP: failed to make connection to backend: localhost, referer: http://swarmclan.ru/
+[Wed Jul 02 06:45:01.620251 2025] [proxy:error] [pid 1097:tid 1178] (111)Connection refused: AH00957: http: attempt to connect to 127.0.0.1:3001 (localhost:3001) failed
+[Wed Jul 02 06:45:01.620541 2025] [proxy_http:error] [pid 1097:tid 1178] [client 152.228.215.155:54132] AH01114: HTTP: failed to make connection to backend: localhost, referer: http://swarmclan.ru/
+[Wed Jul 02 15:24:33.663907 2025] [proxy:error] [pid 1098:tid 1285] (111)Connection refused: AH00957: http: attempt to connect to 127.0.0.1:3001 (localhost:3001) failed
+[Wed Jul 02 15:24:33.664030 2025] [proxy_http:error] [pid 1098:tid 1285] [client 17.22.245.64:60544] AH01114: HTTP: failed to make connection to backend: localhost, referer: http://swarmclan.ru/
+[Wed Jul 02 15:25:46.396586 2025] [proxy:error] [pid 1098:tid 1299] (111)Connection refused: AH00957: http: attempt to connect to 127.0.0.1:3001 (localhost:3001) failed
+[Wed Jul 02 15:25:46.396896 2025] [proxy_http:error] [pid 1098:tid 1299] [client 17.246.23.137:53110] AH01114: HTTP: failed to make connection to backend: localhost, referer: http://www.swarmclan.ru/
