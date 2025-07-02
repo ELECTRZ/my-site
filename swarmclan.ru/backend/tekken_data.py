@@ -1,74 +1,83 @@
-# tekken_data.py
-CHARACTER_MAP = {
-    "0": "Paul",
-    "1": "Law",
-    "2": "King",
-    "3": "Yoshimitsu",
-    "4": "Hwoarang",
-    "5": "Xiaoyu",
-    "6": "Jin",
-    "7": "Bryan",
-    "8": "Kazuya",
-    "9": "Steve",
-    "10": "Jack-8",
-    "11": "Asuka",
-    "12": "Devil Jin",
-    "13": "Feng",
-    "14": "Lili",
-    "15": "Dragunov",
-    "16": "Leo",
-    "17": "Lars",
-    "18": "Alisa",
-    "19": "Claudio",
-    "20": "Shaheen",
-    "21": "Nina",
-    "22": "Lee",
-    "23": "Kuma",
-    "24": "Panda",
-    "28": "Zafina",
-    "29": "Leroy",
-    "32": "Jun",
-    "33": "Reina",
-    "34": "Azucena",
-    "35": "Victor",
-    "36": "Raven",
-    "38": "Eddy",
-    "39": "Lidia",
-    "40": "Heihachi",
-    "41": "Clive",
-    "42": "Anna"
-}
+import requests
+import mysql.connector
+from datetime import datetime, timedelta
+import time
+from config import DB_CONFIG  # Вынеси настройки БД в отдельный файл!
 
-RANK_MAP = {
-    "0": "Beginner",
-    "1": "1st Dan",
-    "2": "2nd Dan",
-    "3": "Fighter",
-    "4": "Strategist",
-    "5": "Combatant",
-    "6": "Brawler",
-    "7": "Ranger",
-    "8": "Cavalry",
-    "9": "Warrior",
-    "10": "Assailant",
-    "11": "Dominator",
-    "12": "Vanquisher",
-    "13": "Destroyer",
-    "14": "Eliminator",
-    "15": "Garyu",
-    "16": "Shinryu",
-    "17": "Tenryu",
-    "18": "Mighty Ruler",
-    "19": "Flame Ruler",
-    "20": "Battle Ruler",
-    "21": "Fujin",
-    "22": "Raijin",
-    "23": "Kishin",
-    "24": "Bushin",
-    "25": "Tekken King",
-    "26": "Tekken Emperor",
-    "27": "Tekken God",
-    "28": "Tekken God Supreme",
-    "29": "God of Destruction",
-    "100": "God of Destruction"
-}
+# Подключение к БД
+def connect_db():
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
+    except mysql.connector.Error as err:
+        print(f"Ошибка подключения к БД: {err}")
+        return None
+
+# Запрос к API и сохранение данных
+def fetch_and_save_replays(before_time=None):
+    if before_time is None:
+        before_time = int(time.time())  # Текущее время в UNIX
+
+    url = "https://wank.wavu.wiki/api/replays?_format=json"
+    params = {"before": before_time}
+    
+    try:
+        response = requests.get(url, params=params, headers={"Accept-Encoding": "gzip"})
+        response.raise_for_status()
+        replays = response.json()
+        
+        conn = connect_db()
+        if not conn:
+            return
+        
+        cursor = conn.cursor()
+        
+        for replay in replays:
+            # Фильтр: только ранговые бои и русскоязычные игроки
+            if replay["battle_type"] == 2 and (replay["p1_lang"] == "ru" or replay["p2_lang"] == "ru"):
+                # Сохраняем игрока 1 (если русский)
+                if replay["p1_lang"] == "ru":
+                    save_player(cursor, replay, "p1")
+                
+                # Сохраняем игрока 2 (если русский)
+                if replay["p2_lang"] == "ru":
+                    save_player(cursor, replay, "p2")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        print(f"Успешно сохранено. Следующий before_time: {before_time - 700}")
+        return before_time - 700  # Для следующего запроса
+    
+    except Exception as e:
+        print(f"Ошибка при запросе к API: {e}")
+
+# Сохранение игрока в БД
+def save_player(cursor, replay, player_prefix):
+    player_data = {
+        "name": replay[f"{player_prefix}_name"],
+        "polaris_id": replay[f"{player_prefix}_polaris_id"],
+        "power": replay[f"{player_prefix}_power"],
+        "lang": replay[f"{player_prefix}_lang"],
+        "chara_id": replay[f"{player_prefix}_chara_id"],
+        "rank": replay[f"{player_prefix}_rank"],
+        "battle_at": datetime.fromtimestamp(replay["battle_at"]).strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    # Проверяем, есть ли игрок уже в БД, и обновляем/добавляем
+    cursor.execute("""
+        INSERT INTO players (name, polaris_id, power, lang, chara_id, rank, last_battle_time)
+        VALUES (%(name)s, %(polaris_id)s, %(power)s, %(lang)s, %(chara_id)s, %(rank)s, %(battle_at)s)
+        ON DUPLICATE KEY UPDATE
+            power = VALUES(power),
+            rank = VALUES(rank),
+            last_battle_time = VALUES(last_battle_time)
+    """, player_data)
+
+# Пример запуска
+if __name__ == "__main__":
+    before_time = int(time.time())  # Начать с текущего времени
+    for _ in range(10):  # 10 запросов (можно заменить на while True для бесконечного цикла)
+        before_time = fetch_and_save_replays(before_time)
+        time.sleep(1)  # Задержка, чтобы не превысить лимиты API
